@@ -1,243 +1,277 @@
-![ALT](./media/images/gemm-hierarchy-with-epilogue-no-labels.png "Complete CUDA GEMM decomposition")
+<div class="Box-sc-g0xbh4-0 bJMeLZ js-snippet-clipboard-copy-unpositioned" data-hpc="true"><article class="markdown-body entry-content container-lg" itemprop="text"><p dir="auto"><a target="_blank" rel="noopener noreferrer" href="/NVIDIA/cutlass/blob/main/media/images/gemm-hierarchy-with-epilogue-no-labels.png"><img src="/NVIDIA/cutlass/raw/main/media/images/gemm-hierarchy-with-epilogue-no-labels.png" alt="丙氨酸转氨酶" title="完整的 CUDA GEMM 分解" style="max-width: 100%;"></a></p>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">弯刀3.5</font></font></h1><a id="user-content-cutlass-35" class="anchor" aria-label="永久链接：CUTLASS 3.5" href="#cutlass-35"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">弯刀 3.5 - 2024 年 4 月</font></font></em></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 是 CUDA C++ 模板抽象的集合，用于在 CUDA 内的所有级别和规模上实现高性能矩阵-矩阵乘法 (GEMM) 和相关计算。它包含类似于用于实现 cuBLAS 和 cuDNN 的分层分解和数据移动策略。 CUTLASS 将这些“移动部件”分解为由 C++ 模板类抽象的可重用、模块化软件组件。概念并行化层次结构不同级别的原语可以通过自定义平铺大小、数据类型和其他算法策略进行专门化和调整。由此产生的灵活性简化了它们在自定义内核和应用程序中作为构建块的使用。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">为了支持各种应用，CUTLASS 为混合精度计算提供了广泛的支持，为半精度浮点 (FP16)、BFloat16 (BF16)、Tensor Float 32 (TF32)、单精度浮点 (FP32)、
+</font></font><a href="/NVIDIA/cutlass/blob/main/examples/27_ampere_3xtf32_fast_accurate_tensorop_gemm"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">通过张量核心指令进行 FP32 仿真</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、双精度浮点 (FP64) 类型、整数数据类型（4b 和 8b）以及二进制数据类型 (1b)。 CUTLASS 演示了针对</font><font style="vertical-align: inherit;">由 NVIDIA Volta、Turing、Ampere 和 Hopper 架构实现的可编程、高吞吐量</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Tensor Core 的</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">曲速同步矩阵乘法运算。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">请参阅</font></font><a href="/NVIDIA/cutlass/blob/main/media/docs/quickstart.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">快速入门指南</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">以快速开始。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">请参阅</font></font><a href="/NVIDIA/cutlass/blob/main/media/docs/functionality.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">功能列表</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">，了解执行模型层次结构的每个级别支持的操作列表。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 3.0 引入了一个新的核心库 CuTe，用于描述和操作线程和数据的张量。 CuTe 是 C++ CUDA 模板抽象的集合，用于定义和操作线程和数据的分层多维布局。 CuTe 提供了紧凑地封装数据的类型、形状、内存空间和布局的</font></font><code>Layout</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">对象</font></font><code>Tensor</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">，同时为用户执行复杂的索引。这让程序员可以专注于算法的逻辑描述，而 CuTe 则为他们进行机械记账。借助这些工具，我们可以快速设计、实现和修改所有密集线性代数运算。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CuTe 的核心抽象是分层多维布局，可以用数据数组组成来表示张量。布局的表示足够强大，足以表示我们实现高效密集线性代数所需的几乎所有内容。布局还可以通过功能组合来组合和操作，在此基础上我们构建了大量常见操作，例如平铺和分区。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 3.0 及更高版本在其模板的整个 GEMM 层次结构中采用 CuTe。这极大地简化了设计并提高了代码的可组合性和可读性。更多特定于 CuTe 的文档可以在其</font></font><a href="/NVIDIA/cutlass/blob/main/media/docs/cute/00_quickstart.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">专用文档目录</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中找到</font><font style="vertical-align: inherit;">。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">除了 GEMM 之外，CUTLASS 通过隐式 GEMM 算法实现高性能卷积。隐式 GEMM 是将卷积运算表述为 GEMM，从而利用 CUTLASS 的模块化 GEMM 管道。这使得 CUTLASS 能够通过重用高度优化的 GEMM 组件来构建卷积。</font></font></p>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 3.5 的新增功能</font></font></h1><a id="user-content-whats-new-in-cutlass-35" class="anchor" aria-label="永久链接：CUTLASS 3.5 的新增功能" href="#whats-new-in-cutlass-35"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 3.5 是 CUTLASS 的更新，添加了：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">通过 WGMMA + </font></font><a href="/NVIDIA/cutlass/blob/main/include/cute/atom/copy_traits_sm90_im2col.hpp"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">TMA im2col</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">针对 Hopper SM90A 的隐式 GEMM 卷积。
+</font></font><ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">使用 CuTe 在 CUTLASS 3.x 中进行本机实现，镜像与</font></font><a href="/NVIDIA/cutlass/blob/main/media/docs/gemm_api_3x.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">GEMM 相同的设计层次结构</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></li>
+<li><font style="vertical-align: inherit;"></font><a href="/NVIDIA/cutlass/blob/main/include/cutlass/conv/convnd_problem_shape.hpp"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">以与等级无关的方式</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">支持 1D、2D 和 3D 卷积</font><font style="vertical-align: inherit;">。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">支持</font></font><a href="/NVIDIA/cutlass/blob/main/test/unit/conv/device_3x/fprop/sm90_conv3d_fprop_implicit_gemm_s8_s8_s32_tensorop_s32.cu"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Fprop</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">、</font></font><a href="/NVIDIA/cutlass/blob/main/test/unit/conv/device_3x/dgrad/sm90_conv2d_dgrad_implicit_gemm_f16_f16_f32_tensorop_f16.cu"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Dgrad</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><a href="/NVIDIA/cutlass/blob/main/test/unit/conv/device_3x/wgrad/sm90_conv1d_wgrad_implicit_gemm_f16_f16_f32_tensorop_f16.cu"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Wgrad</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">算法。</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/python/cutlass_library/conv3x_emitter.py"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 分析器支持</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">通过 3.x API 实现的 2D 和 3D 卷积。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">注意：这是测试版。 CUTLASS 的进一步更新将包括重大性能改进、功能启用以及在 3.7 版本发布之前可能对 API 进行的重大更改。欢迎您对设计提出反馈！</font></font></li>
+</ul>
+</li>
+<li><font style="vertical-align: inherit;"></font><a href="/NVIDIA/cutlass/blob/main/examples/58_ada_fp8_gemm/ada_fp8_gemm.cu"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">通过 2.x API</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">支持Ada (SM89) FP8 张量核心</font><font style="vertical-align: inherit;">。需要 CUDA 12.4 或更高版本。</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/examples/59_ampere_gather_scatter_gemm/README.md"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CuTe 和 CUTLASS 3.x 中的
+</font><a href="/NVIDIA/cutlass/blob/main/examples/59_ampere_gather_scatter_gemm/README.md"><font style="vertical-align: inherit;">安培聚集/散射卷积示例。</font></a></font><ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">展示如何使用 CUTLASS 3.x 和 CuTe 编写和优化自定义内核，以及将卷积实现为 GETT 专业化的一般策略。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">实施粗粒度稀疏聚集/分散内核，在安培级张量核心上实现峰值性能。</font></font></li>
+</ul>
+</li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 2.x 中添加了 32x 和 16x 切片尺寸，以提高窄高和宽短矩阵的性能。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">更新了</font><a href="/NVIDIA/cutlass/blob/main/media/docs/cute/0t_mma_atom.md"><font style="vertical-align: inherit;">MMA 原子</font></a></font><a href="/NVIDIA/cutlass/blob/main/media/docs/cute/03_tensor.md"><code>cute::Tensor&lt;&gt;</code></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的 CuTe 文档，</font><font style="vertical-align: inherit;">以及经过彻底修改的</font><a href="/NVIDIA/cutlass/blob/main/examples/cute/tutorial"><font style="vertical-align: inherit;">CuTe GEMM 教程系列</font></a><font style="vertical-align: inherit;">。</font></font><a href="/NVIDIA/cutlass/blob/main/media/docs/cute/0t_mma_atom.md"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font><a href="/NVIDIA/cutlass/blob/main/examples/cute/tutorial"><font style="vertical-align: inherit;"></font></a><font style="vertical-align: inherit;"></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CuTe 的扩展以支持</font></font><a href="/NVIDIA/cutlass/blob/main/include/cute/algorithm/prefetch.hpp"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">L2 预取</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和</font></font><a href="/NVIDIA/cutlass/blob/main/include/cute/arch/copy_sm90_tma.hpp#L1337"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">TMA 存储+缩减</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">删除了一些 CUTLASS 2.x API 头文件的 C++11 要求。所有 CUTLASS 文件现在都需要 C++17。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">修复以大大减少构建警告。</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">来自社区的更新和错误修复（谢谢！）</font></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">最低要求：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">建筑：沃尔特</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">编译器：必须至少支持 C++17</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUDA 工具包版本：11.4</font></font></li>
+</ul>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">从 CUTLASS 3.0 开始，CUTLASS 删除了对以下内容的支持：</font></font></p>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Maxwell 和 Pascal GPU 架构</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">乌班图16.04</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUDA 10.2</font></font></li>
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">C++ 语言版本低于 17。</font></font></li>
+</ul>
+<p dir="auto"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">有关版本和更新的详细列表，</font><font style="vertical-align: inherit;">请参阅</font></font><a href="/NVIDIA/cutlass/blob/main/CHANGELOG.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">变更日志。</font></font></a><font style="vertical-align: inherit;"></font></strong></p>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">表现</font></font></h1><a id="user-content-performance" class="anchor" aria-label="永久链接：性能" href="#performance"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p align="center" dir="auto"><a target="_blank" rel="noopener noreferrer" href="/NVIDIA/cutlass/blob/main/media/images/cutlass-3.1-gemm-peak-performance.png"><img src="/NVIDIA/cutlass/raw/main/media/images/cutlass-3.1-gemm-peak-performance.png" style="max-width: 100%;"></a></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 原语非常高效。当用于构建设备范围的 GEMM 内核时，它们在标量 GEMM 计算方面表现出与 cuBLAS 相当的峰值性能。上图显示了</font></font><a href="https://www.nvidia.com/en-us/data-center/h100/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA H100</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">（NVIDIA Hopper 架构）、</font></font><a href="https://www.nvidia.com/en-us/data-center/l40/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA L40</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">（NVIDIA Ada 架构）、</font></font><a href="https://www.nvidia.com/en-us/data-center/a100/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA A100</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">（NVIDIA Ampere 架构）</font></font><br><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">
+和</font></font><a href="https://www.nvidia.com/en-us/data-center/a40/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA A40</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">   （NVIDIA Ampere 架构）</font><font style="vertical-align: inherit;">上大矩阵维度下 CUTLASS 相对于 cuBLAS 的性能</font><font style="vertical-align: inherit;">。 CUTLASS 3.0 是使用</font></font><a href="https://developer.nvidia.com/cuda-downloads" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUDA 12.0 工具</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">包编译的。 Tensor Core 运算是使用 CUDA 的
+</font></font><a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-instructions-mma" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">mma</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">和
+</font></font><a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#asynchronous-warpgroup-level-matrix-instructions" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">wgmma</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">指令实现的。</font></font></p>
+<p align="center" dir="auto"><a target="_blank" rel="noopener noreferrer" href="/NVIDIA/cutlass/blob/main/media/images/cutlass-2.9-implicit-gemm-performance.png"><img src="/NVIDIA/cutlass/raw/main/media/images/cutlass-2.9-implicit-gemm-performance.png" style="max-width: 100%;"></a></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">当使用 CUTLASS 构建块构建设备范围的隐式 gemm（Fprop、Dgrad 和 Wgrad）内核时，在</font></font><a href="https://www.nvidia.com/en-us/data-center/a100/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA A100</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">上运行 Resnet-50 层时，CUTLASS 性能也与 cuDNN 相当
+，如上图所示。 Tensor Core运算是使用CUDA的
+</font></font><a href="https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-instructions-mma" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">mma指令</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">实现的。</font></font></p>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">兼容性</font></font></h1><a id="user-content-compatibility" class="anchor" aria-label="永久链接：兼容性" href="#compatibility"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 需要 C++17 主机编译器，并且在使用</font></font><a href="https://developer.nvidia.com/cuda-downloads" rel="nofollow"><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUDA 12.4 工具包</font></font></strong></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">构建时性能最佳。它还兼容 CUDA 11.4、CUDA 11.5、CUDA 11.6、CUDA 11.7、CUDA 11.8、CUDA 12.0、CUDA 12.1、CUDA 12.2.2、CUDA 12.3.1 和 CUDA 12.3.2。</font></font></p>
+<div class="markdown-heading" dir="auto"><h2 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">操作系统</font></font></h2><a id="user-content-operating-systems" class="anchor" aria-label="永久链接：操作系统" href="#operating-systems"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">我们测试了以下环境。</font></font></p>
+<table>
+<thead>
+<tr>
+<th><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">操作系统</font></font></strong></th>
+<th><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">编译器</font></font></strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">乌班图18.04</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">海湾合作委员会7.5.0</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">乌班图20.04</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">海湾合作委员会10.3.0</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">乌班图22.04</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">海湾合作委员会 11.2.0</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">乌班图22.04</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">铿锵10.0.0</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">乌班图22.04</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">铿锵14.0.6</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">乌班图22.04</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">铿锵17.0.6</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">视窗10.0</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Visual Studio 2019 v16.11.27</font></font></td>
+</tr>
+</tbody>
+</table>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">注意：GCC 8.5.0 具有有关折叠表达式和重载运算符的已知回归。建议使用 GCC 7.5.0 或（首选）GCC &gt;= 9。</font></font></p>
+<div class="markdown-heading" dir="auto"><h2 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">硬件</font></font></h2><a id="user-content-hardware" class="anchor" aria-label="永久链接：硬件" href="#hardware"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 在以下 NVIDIA GPU 上成功运行，预计在基于 Volta、Turing、Ampere、Ada 和 Hopper 架构的 NVIDIA GPU 上也能高效运行。</font></font></p>
+<table>
+<thead>
+<tr>
+<th><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">图形处理器</font></font></strong></th>
+<th><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUDA计算能力</font></font></strong></th>
+<th><strong><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS-3 所需的最低 CUDA 工具包</font></font></strong></th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA V100 张量核心 GPU</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">7.0</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.4</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA泰坦V</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">7.0</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.4</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA GeForce RTX 2080 TI、2080、2070</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">7.5</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.4</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">英伟达T4</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">7.5</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.4</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA A100 张量核心 GPU</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">8.0</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.4</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">英伟达A10</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">8.6</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.4</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA GeForce RTX 3090</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">8.6</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.4</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA GeForce RTX 4090</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">8.9</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.8</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">英伟达L40</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">8.9</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.8</font></font></td>
+</tr>
+<tr>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">NVIDIA H100 张量核心 GPU</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">9.0</font></font></td>
+<td><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">11.8</font></font></td>
+</tr>
+</tbody>
+</table>
+<div class="markdown-heading" dir="auto"><h2 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">目标架构</font></font></h2><a id="user-content-target-architecture" class="anchor" aria-label="永久链接：目标架构" href="#target-architecture"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">一般来说，为一种目标架构生成的 PTX 代码可以在未来的架构上运行（即，它是向前兼容的）。然而，CUDA 12.0引入了“架构加速功能”的概念，其PTX没有前向兼容性保证。一些 Hopper PTX 指令属于此类架构加速功能，因此需要</font></font><code>sm_90a</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">目标架构（请注意附加的“a”）。有关此指令和其他架构加速指令的更多详细信息，请参阅</font></font><a href="https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#feature-availability" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUDA 文档</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">目标架构信息通过 cmake 标志传递到 CUTLASS </font></font><code>CUTLASS_NVCC_ARCHS</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。为了最大限度地提高 Hopper GH100 的性能，用户需要构建 CUTLASS 作为</font></font><code>90a</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">目标架构。如果用户意外地使用 SM90 目标（注意缺少“a”）以及 CTK 12 或 11.8 构建了使用 SM90a 功能（例如 Hopper Tensor Core 指令）的内核，则内核预计会因运行时错误而失败。</font></font></p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto"><pre class="notranslate"><code>cmake .. -DCUTLASS_NVCC_ARCHS="90a" 
+</code></pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="cmake .. -DCUTLASS_NVCC_ARCHS=&quot;90a&quot; " tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">请参阅</font></font><a href="/NVIDIA/cutlass/blob/main/media/docs/functionality.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">功能文档</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">，了解有关哪些内核需要哪些目标架构的详细信息。</font></font></p>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">文档</font></font></h1><a id="user-content-documentation" class="anchor" aria-label="永久链接：文档" href="#documentation"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">以下文档和随附的
+</font></font><a href="https://nvidia.github.io/cutlass" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Doxygen 文档</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中描述了 CUTLASS 。</font></font></p>
+<ul dir="auto">
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/quickstart.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">快速入门指南</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 构建和运行 CUTLASS</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/functionality.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">功能</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 总结 CUTLASS 中可用的功能</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/efficient_gemm.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUDA 中的高效 GEMM</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> - 描述如何在 CUDA 中高效实现 GEMM 内核</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/cutlass_3x_design.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 3.x 设计</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 描述 CUTLASS 3.x 设计、其优点以及 CuTe 如何使我们能够编写更多可组合组件</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/gemm_api_3x.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">GEMM API 3.x</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> - 描述 CUTLASS 3.x GEMM 模型和 C++ 模板概念</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/gemm_api.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">GEMM API 2.x</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> - 描述 CUTLASS 2.x GEMM 模型和 C++ 模板概念</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/implicit_gemm_convolution.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">隐式 GEMM 卷积</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 描述 CUTLASS 中的 2-D 和 3-D 卷积</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/code_organization.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">代码组织</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 描述 CUTLASS 项目的组织和内容</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/terminology.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">术语</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 描述代码中使用的术语</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/programming_guidelines.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">编程指南</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 编写高效现代 CUDA C++ 的指南</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/fundamental_types.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">基本类型</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 描述 CUTLASS 中用于表示数值量和数组的基本 C++ 类</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/layout.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">布局</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 描述内存中矩阵和张量的布局</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/tile_iterator_concept.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Tile Iterators</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> - 描述了在内存中迭代矩阵块的 C++ 概念</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/profiler.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS Profiler</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;"> - 命令行驱动的分析应用程序</font></font></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/utilities.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 实用程序</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">- 用于促进快速开发的附加模板</font></font></li>
+</ul>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">资源</font></font></h1><a id="user-content-resources" class="anchor" aria-label="永久链接：资源" href="#resources"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"></font><a href="http://on-demand.gputechconf.com/gtc/2018/presentation/s8854-cutlass-software-primitives-for-dense-linear-algebra-at-all-levels-and-scales-within-cuda.pdf" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">我们还在2018 年 GPU 技术大会</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">上的演讲中描述了高效 GEMM 的结构
+</font><font style="vertical-align: inherit;">。</font></font></p>
+<ul dir="auto">
+<li><a href="https://www.nvidia.com/en-us/on-demand/session/gtcsiliconvalley2018-s8854/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS：CUDA 内所有级别和规模的密集线性代数的软件基元</font></font></a></li>
+<li><a href="https://www.nvidia.com/en-us/on-demand/session/gtcsj20-s21745/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">开发 CUDA 内核将 Tensor Core 推向 NVIDIA A100 的绝对极限</font></font></a></li>
+<li><a href="https://www.nvidia.com/en-us/on-demand/session/gtcspring21-s31883/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在 CUTLASS 中使用张量核心加速卷积</font></font></a></li>
+<li><a href="https://www.nvidia.com/en-us/on-demand/session/gtcspring22-s41996/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">通过增加 CUTLASS 中张量核心的利用率来加速后向数据梯度</font></font></a></li>
+<li><a href="https://www.nvidia.com/en-us/on-demand/session/gtcfall22-a41131/" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS：Python API、增强功能和 NVIDIA Hopper</font></font></a></li>
+</ul>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">建造弯刀</font></font></h1><a id="user-content-building-cutlass" class="anchor" aria-label="永久链接：建造 CUTLASS" href="#building-cutlass"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 是一个仅包含头文件的模板库，不需要构建即可供其他项目使用。客户端应用程序应</font></font><code>include/</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在其包含路径中</font><font style="vertical-align: inherit;">以 CUTLASS 目录为目标。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 单元测试、示例和实用程序可以使用 CMake 构建。</font></font><a href="/NVIDIA/cutlass/blob/main/media/docs/quickstart.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">快速入门指南</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中给出了 CMake 的最低版本</font><font style="vertical-align: inherit;">。确保</font></font><code>CUDACXX</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">环境变量指向系统上安装的 CUDA 工具包中的 NVCC。</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ <span class="pl-k">export</span> CUDACXX=<span class="pl-smi">${CUDA_INSTALL_PATH}</span>/bin/nvcc</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ export CUDACXX=${CUDA_INSTALL_PATH}/bin/nvcc" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">在 CUTLASS 项目中创建一个构建目录，然后运行 &ZeroWidthSpace;&ZeroWidthSpace;CMake。默认情况下，CUTLASS 将为 CUDA 架构版本 5.0、6.0、6.1、7.0、7.5、8.0、8.6、8.9 和 9.0 构建内核。为了减少编译时间，您可以通过更改 CMake 配置设置来指定构建 CUTLASS 的体系结构
+</font></font><code>CUTLASS_NVCC_ARCHS</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ mkdir build <span class="pl-k">&amp;&amp;</span> <span class="pl-c1">cd</span> build
 
-# CUTLASS 3.5
+$ cmake .. -DCUTLASS_NVCC_ARCHS=80               <span class="pl-c"><span class="pl-c">#</span> compiles for NVIDIA's Ampere Architecture</span></pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ mkdir build &amp;&amp; cd build
 
-_CUTLASS 3.5 - April 2024_
-
-CUTLASS is a collection of CUDA C++ template abstractions for implementing
-high-performance matrix-matrix multiplication (GEMM) and related computations at all levels 
-and scales within CUDA. It incorporates strategies for hierarchical decomposition and 
-data movement similar to those used to implement cuBLAS and cuDNN.  CUTLASS decomposes 
-these "moving parts" into reusable, modular software components abstracted by C++ template 
-classes.  Primitives for different levels of a conceptual parallelization hierarchy
-can be specialized and tuned via custom tiling sizes, data types,
-and other algorithmic policy. The resulting flexibility simplifies their use
-as building blocks within custom kernels and applications.
-
-To support a wide variety of applications, CUTLASS provides extensive support for
-mixed-precision computations, providing specialized data-movement and
-multiply-accumulate abstractions for half-precision floating
-point (FP16), BFloat16 (BF16), Tensor Float 32 (TF32),
-single-precision floating point (FP32),
-[FP32 emulation via tensor core instruction](./examples/27_ampere_3xtf32_fast_accurate_tensorop_gemm),
-double-precision floating
-point (FP64) types, integer data types (4b and 8b), and binary data types (1b).
-CUTLASS demonstrates warp-synchronous matrix multiply operations
-targeting the programmable, high-throughput _Tensor Cores_ implemented by
-NVIDIA's Volta, Turing, Ampere, and Hopper architectures.
-
-See the [Quick Start Guide](./media/docs/quickstart.md) to get started quickly.
-
-See the [functionality listing](./media/docs/functionality.md) for the list of operations
-supported at each level of the execution model hierarchy.
-
-CUTLASS 3.0 introduced a new core library, CuTe, to describe and manipulate tensors of threads and data.
-CuTe is a collection of C++ CUDA template abstractions for defining and operating on hierarchically multidimensional layouts of threads and data. CuTe provides `Layout` and `Tensor` objects that compactly package the type, shape, memory space, and layout of data, while performing the complicated indexing for the user. This lets programmers focus on the logical descriptions of their algorithms while CuTe does the mechanical bookkeeping for them. With these tools, we can quickly design, implement, and modify all dense linear algebra operations.
-
-The core abstractions of CuTe are hierarchically multidimensional layouts which can be composed with data arrays to represent tensors. The representation of layouts is powerful enough to represent nearly everything we need to implement efficient dense linear algebra. Layouts can also be combined and manipulated via functional composition, on which we build a large set of common operations such as tiling and partitioning.
-
-CUTLASS 3.0 and beyond adopts CuTe throughout the GEMM hierarchy in its templates. This greatly simplifies the design
-and improves code composability and readability. More documentation specific to CuTe can be found in its [dedicated documentation directory](./media/docs/cute/00_quickstart.md).
-
-In addition to GEMMs, CUTLASS implements high-performance convolution via the implicit GEMM algorithm. Implicit GEMM is the formulation of a convolution operation as a GEMM thereby taking advantage of CUTLASS's modular GEMM pipeline. This allows CUTLASS to build convolutions by reusing highly-optimized GEMM components.
-
-# What's New in CUTLASS 3.5
-
-CUTLASS 3.5 is an update to CUTLASS adding:
-
-- Implicit GEMM Convolutions targeting Hopper SM90A via WGMMA + [TMA im2col](./include/cute/atom/copy_traits_sm90_im2col.hpp).
-  + Native implementation in CUTLASS 3.x using CuTe, mirroring the [same design hierarchy as that of GEMMs](./media/docs/gemm_api_3x.md).
-  + Support for 1D, 2D, and 3D convolutions in a [rank-agnostic fashion](./include/cutlass/conv/convnd_problem_shape.hpp).
-  + Support for [Fprop](./test/unit/conv/device_3x/fprop/sm90_conv3d_fprop_implicit_gemm_s8_s8_s32_tensorop_s32.cu), [Dgrad](./test/unit/conv/device_3x/dgrad/sm90_conv2d_dgrad_implicit_gemm_f16_f16_f32_tensorop_f16.cu), and [Wgrad](./test/unit/conv/device_3x/wgrad/sm90_conv1d_wgrad_implicit_gemm_f16_f16_f32_tensorop_f16.cu) algorithms.
-  + [CUTLASS profiler support](./python/cutlass_library/conv3x_emitter.py) for 2D and 3D convolutions implemented via the 3.x API.
-  + NOTE: this is a beta release. Further updates to CUTLASS will include major performance improvements, feature enablement, and possible breaking changes to the API until 3.7 release. Your feedback is welcome on the design!
-- Support for [Ada (SM89) FP8 tensor cores via the 2.x API](./examples/58_ada_fp8_gemm/ada_fp8_gemm.cu). Requires CUDA 12.4 or newer.
-- [Ampere gather/scatter convolution example](./examples/59_ampere_gather_scatter_gemm/README.md) in CuTe and CUTLASS 3.x.
-  + Showcasing how custom kernels can be written and optimized using CUTLASS 3.x and CuTe and the general strategy for implementing convolutions as specializations of GETTs.
-  + Implementation of a coarse grained sparse gather/scatter kernel achieving peak performance on Ampere class tensor cores.
-- 32x and 16x tile sizes are added to CUTLASS 2.x to improve the performance of narrow-tall and wide-short matrices.
-- Updates to CuTe documentation for [`cute::Tensor<>`](./media/docs/cute/03_tensor.md), [MMA atoms](./media/docs/cute/0t_mma_atom.md), and an overhauled [CuTe GEMM tutorial series](./examples/cute/tutorial).
-- Extensions to CuTe to support [L2 prefetching](./include/cute/algorithm/prefetch.hpp) and [TMA store+reductions](./include/cute/arch/copy_sm90_tma.hpp#L1337).
-- Remove C++11 requirement on a few CUTLASS 2.x API header files. All CUTLASS files now require C++17.
-- Fixes to greatly reduce build warnings.
-- Updates and bugfixes from the community (thanks!)
-
-Minimum requirements:
-
-- Architecture: Volta
-- Compiler: Must support at least C++17
-- CUDA Toolkit version: 11.4
-
-Starting from CUTLASS 3.0, CUTLASS removed support for the following:
-
-- Maxwell and Pascal GPU architectures
-- Ubuntu 16.04
-- CUDA 10.2
-- C++ language versions less than 17.
-
-**See the [CHANGELOG](CHANGELOG.md) for a detailed listing of releases and updates.**
-
-# Performance
-
-<p align="center"><img src=media/images/cutlass-3.1-gemm-peak-performance.png></p>
-
-CUTLASS primitives are very efficient.  When used to construct device-wide GEMM kernels,
-they exhibit peak performance comparable to cuBLAS for scalar GEMM
-computations. The above figure shows CUTLASS performance relative to cuBLAS
-for large matrix dimensions on an [NVIDIA H100](https://www.nvidia.com/en-us/data-center/h100/) (NVIDIA Hopper architecture), 
-an [NVIDIA L40](https://www.nvidia.com/en-us/data-center/l40/) (NVIDIA Ada architecture),
-an [NVIDIA A100](https://www.nvidia.com/en-us/data-center/a100/) (NVIDIA Ampere architecture),  
-and an [NVIDIA A40](https://www.nvidia.com/en-us/data-center/a40/)  (NVIDIA Ampere architecture).
-CUTLASS 3.0 was compiled with the [CUDA 12.0 Toolkit](https://developer.nvidia.com/cuda-downloads). 
-Tensor Core operations are implemented using CUDA's 
-[mma](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-instructions-mma) and
-[wgmma](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#asynchronous-warpgroup-level-matrix-instructions) instructions.
-
-<p align="center"><img src=media/images/cutlass-2.9-implicit-gemm-performance.png></p>
-
-When using CUTLASS building blocks to construct device-wide implicit gemm (Fprop, Dgrad, and Wgrad)
-kernels, CUTLASS performance is also comparable to cuDNN when running Resnet-50 layers on an [NVIDIA A100](https://www.nvidia.com/en-us/data-center/a100/)
-as shown in the above figure.  Tensor Core operations are implemented using CUDA's
-[mma instruction](https://docs.nvidia.com/cuda/parallel-thread-execution/index.html#warp-level-matrix-instructions-mma).
-
-# Compatibility
-
-CUTLASS requires a C++17 host compiler and 
-performs best when built with the [**CUDA 12.4 Toolkit**](https://developer.nvidia.com/cuda-downloads).
-It is also compatible with CUDA 11.4, CUDA 11.5, CUDA 11.6, CUDA 11.7, CUDA 11.8, CUDA 12.0, CUDA 12.1, CUDA 12.2.2, CUDA 12.3.1 and CUDA 12.3.2.
-
-## Operating Systems
-We have tested the following environments.
-
-|**Operating System** | **Compiler** |
-|-----------------|----------|
-| Ubuntu 18.04 | GCC 7.5.0  |
-| Ubuntu 20.04 | GCC 10.3.0 |
-| Ubuntu 22.04 | GCC 11.2.0 |
-| Ubuntu 22.04 | Clang 10.0.0 |
-| Ubuntu 22.04 | Clang 14.0.6 |
-| Ubuntu 22.04 | Clang 17.0.6 |
-| Windows 10.0 | Visual Studio 2019 v16.11.27 |
-
-Note: GCC 8.5.0 has known regressions regarding fold expressions and overloaded operators. Using GCC 7.5.0 or (preferred) GCC >= 9 is recommended.
-
-## Hardware
-CUTLASS runs successfully on the following NVIDIA GPUs, and it is expected to be efficient on Volta, Turing, Ampere, Ada, and Hopper architecture based NVIDIA GPUs.
-
-|**GPU**|**CUDA Compute Capability**|**Minimum CUDA Toolkit Required by CUTLASS-3**|
-|---|---|---|
-|NVIDIA V100 Tensor Core GPU            |7.0|11.4|
-|NVIDIA TitanV                          |7.0|11.4|
-|NVIDIA GeForce RTX 2080 TI, 2080, 2070 |7.5|11.4|
-|NVIDIA T4                              |7.5|11.4|
-|NVIDIA A100 Tensor Core GPU            |8.0|11.4|
-|NVIDIA A10                             |8.6|11.4|
-|NVIDIA GeForce RTX 3090                |8.6|11.4|
-|NVIDIA GeForce RTX 4090                |8.9|11.8|
-|NVIDIA L40                             |8.9|11.8|
-|NVIDIA H100 Tensor Core GPU            |9.0|11.8|
-
-## Target Architecture
-
-In general, PTX code generated for one target architecture can be run on future architectures (i.e., it is forward compatible).  However, CUDA 12.0 introduced the concept of "architecture-accelerated features" whose PTX does not have forward compatibility guarantees. Several Hopper PTX instructions fall under this category of architecture-accelerated features, and thus require a `sm_90a` target architecture (note the "a" appended). For more details on this and other architecture-accelerated instructions, please refer to the [CUDA Documentation](https://docs.nvidia.com/cuda/cuda-c-programming-guide/index.html#feature-availability).
-
-The target architecture information is passed on to CUTLASS via the cmake flag `CUTLASS_NVCC_ARCHS`. In order to maximize performance on Hopper GH100, users are required to build CUTLASS with `90a` as the target architecture. If a user accidentally builds a kernel which uses SM90a features (e.g. Hopper Tensor Core Instructions), using the SM90 target (note the lack of "a"), with either CTK 12 or 11.8, the kernel is expected to fail with a runtime error.
-
-```
-cmake .. -DCUTLASS_NVCC_ARCHS="90a" 
-```
-
-Please refer to the [functionality documentation](./media/docs/functionality.md) for details on which kernels require which target architectures.
-
-# Documentation
-
-CUTLASS is described in the following documents and the accompanying
-[Doxygen documentation](https://nvidia.github.io/cutlass).
-
-- [Quick Start Guide](./media/docs/quickstart.md) - build and run CUTLASS
-- [Functionality](./media/docs/functionality.md) - summarizes functionality available in CUTLASS
-- [Efficient GEMM in CUDA](./media/docs/efficient_gemm.md) - describes how GEMM kernels may be implemented efficiently in CUDA
-- [CUTLASS 3.x Design](./media/docs/cutlass_3x_design.md) - describes the CUTLASS 3.x design, its benefits, and how CuTe enables us to write much more composable components
-- [GEMM API 3.x](./media/docs/gemm_api_3x.md) - describes the CUTLASS 3.x GEMM model and C++ template concepts
-- [GEMM API 2.x](./media/docs/gemm_api.md) - describes the CUTLASS 2.x GEMM model and C++ template concepts
-- [Implicit GEMM Convolution](./media/docs/implicit_gemm_convolution.md) - describes 2-D and 3-D convolution in CUTLASS
-- [Code Organization](./media/docs/code_organization.md) - describes the organization and contents of the CUTLASS project
-- [Terminology](./media/docs/terminology.md) - describes terms used in the code
-- [Programming Guidelines](./media/docs/programming_guidelines.md) - guidelines for writing efficient modern CUDA C++
-- [Fundamental types](./media/docs/fundamental_types.md) - describes basic C++ classes used in CUTLASS to represent numeric quantities and arrays
-- [Layouts](./media/docs/layout.md) - describes layouts of matrices and tensors in memory
-- [Tile Iterators](./media/docs/tile_iterator_concept.md) - describes C++ concepts for iterating over tiles of matrices in memory
-- [CUTLASS Profiler](./media/docs/profiler.md) - command-line driven profiling application
-- [CUTLASS Utilities](./media/docs/utilities.md) - additional templates used to facilate rapid development
-
-# Resources
-We have also described the structure of an efficient GEMM in our talk at the
-[GPU Technology Conference 2018](http://on-demand.gputechconf.com/gtc/2018/presentation/s8854-cutlass-software-primitives-for-dense-linear-algebra-at-all-levels-and-scales-within-cuda.pdf).
-
- - [CUTLASS: Software Primitives for Dense Linear Algebra at All Levels and Scales within CUDA](https://www.nvidia.com/en-us/on-demand/session/gtcsiliconvalley2018-s8854/)
- - [Developing CUDA Kernels to Push Tensor Cores to the Absolute Limit on NVIDIA A100](https://www.nvidia.com/en-us/on-demand/session/gtcsj20-s21745/)
- - [Accelerating Convolution with Tensor Cores in CUTLASS](https://www.nvidia.com/en-us/on-demand/session/gtcspring21-s31883/)
- - [Accelerating Backward Data Gradient by Increasing Tensor Core Utilization in CUTLASS](https://www.nvidia.com/en-us/on-demand/session/gtcspring22-s41996/)
- - [CUTLASS: Python API, Enhancements, and NVIDIA Hopper](https://www.nvidia.com/en-us/on-demand/session/gtcfall22-a41131/)
-
-# Building CUTLASS
-
-CUTLASS is a header-only template library and does not need to be built to be used by other
-projects. Client applications should target CUTLASS's `include/` directory in their include
-paths.
-
-CUTLASS unit tests, examples, and utilities can be build with CMake.
-The minimum version of CMake is given in the [Quickstart guide](./media/docs/quickstart.md).
-Make sure the `CUDACXX` environment  variable points to NVCC in the CUDA Toolkit installed
-on your system.
-
-```bash
-$ export CUDACXX=${CUDA_INSTALL_PATH}/bin/nvcc
-```
-
-Create a build directory within the CUTLASS project, then run CMake. By default CUTLASS will build kernels
-for CUDA architecture versions 5.0, 6.0, 6.1, 7.0, 7.5, 8.0, 8.6, 8.9, and 9.0.
-To reduce compile time you can specify
-the architectures to build CUTLASS for by changing the CMake configuration setting
-`CUTLASS_NVCC_ARCHS`.
-
-```bash
-$ mkdir build && cd build
-
-$ cmake .. -DCUTLASS_NVCC_ARCHS=80               # compiles for NVIDIA's Ampere Architecture
-```
-
-From the `build/` directory, compile and run the CUTLASS unit tests by building the target `test_unit` with make.
-
-The unit tests are organized as several binaries mirroring the top-level namespaces of CUTLASS,
-and they may be executed in parallel via make's `-j` command line argument.
-
-```bash
-$ make test_unit -j
+$ cmake .. -DCUTLASS_NVCC_ARCHS=80               # compiles for NVIDIA's Ampere Architecture" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">从</font></font><code>build/</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">目录中，通过使用 make 构建目标来编译并运行 CUTLASS 单元测试</font></font><code>test_unit</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">单元测试被组织为几个二进制文件，镜像 CUTLASS 的顶级命名空间，并且它们可以通过 make 的</font></font><code>-j</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">命令行参数并行执行。</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ make test_unit -j
+...
+...
+...
+[----------] Global <span class="pl-c1">test</span> environment tear-down
+[<span class="pl-k">==========</span>] 946 tests from 57 <span class="pl-c1">test</span> cases ran. (10812 ms total)
+[  PASSED  ] 946 tests.</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ make test_unit -j
 ...
 ...
 ...
 [----------] Global test environment tear-down
 [==========] 946 tests from 57 test cases ran. (10812 ms total)
-[  PASSED  ] 946 tests.
-```
-
-All tests should pass on supported platforms, though the exact number of tests may vary over time.
-
-
-# Project Structure
-
-CUTLASS is arranged as a header-only library along with Utilities, Tools, Examples, and unit tests. 
-[Doxygen documentation](https://nvidia.github.io/cutlass) provides a complete list of files, classes, 
-and template concepts defined in the CUTLASS project.
-
-A detailed explanation of the source code organization may be found in the 
-[CUTLASS documentation](./media/docs/code_organization.md), but several main components are summarized below.
-
-## CUTLASS Template Library
-
-```
-include/                     # client applications should target this directory in their build's include paths
+[  PASSED  ] 946 tests." tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">所有测试都应在支持的平台上通过，但测试的确切数量可能会随着时间的推移而变化。</font></font></p>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">项目结构</font></font></h1><a id="user-content-project-structure" class="anchor" aria-label="永久链接：项目结构" href="#project-structure"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 与实用程序、工具、示例和单元测试一起被安排为仅包含头文件的库。
+ </font></font><a href="https://nvidia.github.io/cutlass" rel="nofollow"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">Doxygen 文档</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">提供了 CUTLASS 项目中定义的文件、类和模板概念的完整列表。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">源代码组织的详细说明可以在
+</font></font><a href="/NVIDIA/cutlass/blob/main/media/docs/code_organization.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 文档</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中找到，但下面总结了几个主要组件。</font></font></p>
+<div class="markdown-heading" dir="auto"><h2 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 模板库</font></font></h2><a id="user-content-cutlass-template-library" class="anchor" aria-label="永久链接：CUTLASS 模板库" href="#cutlass-template-library"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto"><pre class="notranslate"><code>include/                     # client applications should target this directory in their build's include paths
 
   cutlass/                   # CUDA Templates for Linear Algebra Subroutines and Solvers - headers only
 
@@ -277,16 +311,59 @@ include/                     # client applications should target this directory 
 
     *                        # Core library types such as Shape, Stride, Layout, Tensor, and associated operations
 
-```
+</code></pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="include/                     # client applications should target this directory in their build's include paths
 
-### CUTLASS SDK Examples
+  cutlass/                   # CUDA Templates for Linear Algebra Subroutines and Solvers - headers only
 
-[CUTLASS SDK examples](./examples) apply CUTLASS templates to implement basic computations.
+    arch/                    # direct exposure of architecture features (including instruction-level GEMMs)
 
-### Tools
+    conv/                    # code specialized for convolution
 
-```
-tools/
+    epilogue/                # code specialized for the epilogue of gemm/convolution
+
+    gemm/                    # code specialized for general matrix product computations
+
+    layout/                  # layout definitions for matrices, tensors, and other mathematical objects in memory
+
+    platform/                # CUDA-capable Standard Library components
+
+    reduction/               # bandwidth-limited reduction kernels that do not fit the &quot;gemm&quot; model
+
+    thread/                  # simt code that can be performed within a CUDA thread
+    
+    transform/               # code specialized for layout, type, and domain transformations
+
+    *                        # core vocabulary types, containers, and basic numeric operations
+
+  cute/                      # CuTe Layout, layout algebra, MMA/Copy atoms, tiled MMA/Copy
+
+    algorithm/               # Definitions of core operations such as copy, gemm, and operations on cute::tuples
+
+    arch/                    # Bare bones PTX wrapper structs for copy and math instructions
+
+    atom/                    # Meta-information either link to or built from arch/ operators
+
+      mma_atom.hpp           # cute::Mma_Atom and cute::TiledMma
+
+      copy_atom.hpp          # cute::Copy_Atom and cute::TiledCopy
+
+      *sm*.hpp               # Arch specific meta-information for copy and math operations
+
+    *                        # Core library types such as Shape, Stride, Layout, Tensor, and associated operations
+" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<div class="markdown-heading" dir="auto"><h3 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS SDK 示例</font></font></h3><a id="user-content-cutlass-sdk-examples" class="anchor" aria-label="永久链接：CUTLASS SDK 示例" href="#cutlass-sdk-examples"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><a href="/NVIDIA/cutlass/blob/main/examples"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS SDK示例</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">应用CUTLASS模板来实现基本计算。</font></font></p>
+<div class="markdown-heading" dir="auto"><h3 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">工具</font></font></h3><a id="user-content-tools" class="anchor" aria-label="永久链接：工具" href="#tools"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto"><pre class="notranslate"><code>tools/
   library/                   # CUTLASS Instance Library - contains instantiations of all supported CUTLASS templates
     include/
       cutlass/
@@ -299,55 +376,79 @@ tools/
     include/                 #                            manging tensors in device memory, reference
       cutlass/               #                            implementations for GEMM, random initialization
         util/                #                            of tensors, and I/O.
-```
+</code></pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="tools/
+  library/                   # CUTLASS Instance Library - contains instantiations of all supported CUTLASS templates
+    include/
+      cutlass/
+        library/
 
-### Test
-
-The `test/unit/` directory consist of unit tests implemented with Google Test that demonstrate
-basic usage of Core API components and complete tests of the CUTLASS GEMM computations.
-
-Instructions for building and running the Unit tests are described in the [Quickstart guide](./media/docs/quickstart.md).
-
-# Performance Profiling
-
-The `tools/profiler/` directory contains a command-line utility for launching each of the GEMM kernels.
-It can be built as follows:
-
-```bash
-$ make cutlass_profiler -j16
-```
-## Building all GEMM and Convolution kernels (_long_ build times)
-
-By default, only one tile size is instantiated for each data type, math instruction, and layout.
-To instantiate all, set the following environment variable when running CMake from an empty `build/` directory.
-Beware, this results in *tens of thousands* of kernels and long build times. 
-This would also result in a large binary size and on some platforms linker to fail on building the library.
-Therefore, it's highly recommended to generate only a subset of kernels as demonstrated in the sub-section below.
-```bash
-$ cmake .. -DCUTLASS_NVCC_ARCHS=90a -DCUTLASS_LIBRARY_KERNELS=all
+  profiler/                  # CUTLASS Profiler         - command-line utility for executing operations in the
+                             #                            CUTLASS Library
+  
+  util/                      # CUTLASS Utilities        - contains numerous helper classes for
+    include/                 #                            manging tensors in device memory, reference
+      cutlass/               #                            implementations for GEMM, random initialization
+        util/                #                            of tensors, and I/O." tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<div class="markdown-heading" dir="auto"><h3 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">测试</font></font></h3><a id="user-content-test" class="anchor" aria-label="永久链接：测试" href="#test"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">该</font></font><code>test/unit/</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">目录由使用 Google Test 实现的单元测试组成，演示了核心 API 组件的基本用法以及 CUTLASS GEMM 计算的完整测试。</font></font></p>
+<p dir="auto"><font style="vertical-align: inherit;"></font><a href="/NVIDIA/cutlass/blob/main/media/docs/quickstart.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">快速入门指南</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">中描述了构建和运行单元测试的说明</font><font style="vertical-align: inherit;">。</font></font></p>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">性能分析</font></font></h1><a id="user-content-performance-profiling" class="anchor" aria-label="永久链接：性能分析" href="#performance-profiling"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">该</font></font><code>tools/profiler/</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">目录包含用于启动每个 GEMM 内核的命令行实用程序。它可以构建如下：</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ make cutlass_profiler -j16</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ make cutlass_profiler -j16" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<div class="markdown-heading" dir="auto"><h2 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">构建所有 GEMM 和卷积内核（</font><font style="vertical-align: inherit;">构建时间</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">长）</font></font></em><font style="vertical-align: inherit;"></font></h2><a id="user-content-building-all-gemm-and-convolution-kernels-long-build-times" class="anchor" aria-label="永久链接：构建所有 GEMM 和卷积内核（构建时间长）" href="#building-all-gemm-and-convolution-kernels-long-build-times"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">默认情况下，只会为每种数据类型、数学指令和布局实例化一个图块大小。要实例化所有内容，请在从空目录运行 CMake 时设置以下环境变量</font></font><code>build/</code><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。请注意，这会导致</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">数以万计</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">的内核和较长的构建时间。这还会导致二进制大小过大，并且在某些平台上链接器无法构建库。因此，强烈建议仅生成内核的子集，如下面小节所示。</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ cmake .. -DCUTLASS_NVCC_ARCHS=90a -DCUTLASS_LIBRARY_KERNELS=all
 ...
-$ make cutlass_profiler -j16
-```
-
-## Building a subset of GEMM and Convolution kernels (_reduced_ build times)
-
-To compile strictly one kernel or a small set of kernels, a comma-delimited list of kernel names with 
-wildcard characters may be used to reduce the set of kernels. The following examples show building exactly one
-or a subset of kernels for NVIDIA Ampere and Turing architecture:
-
-### Building a subset Tensor Core GEMM kernels
-
-To compile a subset of Tensor Core GEMM kernels with FP32 accumulation and FP16 input targeting NVIDIA Ampere and Turing architecture, 
-use the below cmake command line:
-```bash
-$ cmake .. -DCUTLASS_NVCC_ARCHS='75;80' -DCUTLASS_LIBRARY_KERNELS=cutlass_tensorop_s*gemm_f16_*_nt_align8
+$ make cutlass_profiler -j16</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cmake .. -DCUTLASS_NVCC_ARCHS=90a -DCUTLASS_LIBRARY_KERNELS=all
 ...
-$ make cutlass_profiler -j16
-```
-
-Example command line for profiling a subset of Tensor Core GEMM kernels is as follows:
-```bash
-./tools/profiler/cutlass_profiler --kernels=cutlass_tensorop_s*gemm_f16_*_nt_align8 --m=3456 --n=4096 --k=4096
+$ make cutlass_profiler -j16" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<div class="markdown-heading" dir="auto"><h2 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">构建 GEMM 和卷积内核的子集（</font></font><em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">减少</font></font></em><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">构建时间）</font></font></h2><a id="user-content-building-a-subset-of-gemm-and-convolution-kernels-reduced-build-times" class="anchor" aria-label="永久链接：构建 GEMM 和卷积内核的子集（减少构建时间）" href="#building-a-subset-of-gemm-and-convolution-kernels-reduced-build-times"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">为了严格编译一个内核或一小组内核，可以使用带有通配符的逗号分隔的内核名称列表来减少内核集。以下示例展示了为 NVIDIA Ampere 和 Turing 架构构建一个或一个内核子集：</font></font></p>
+<div class="markdown-heading" dir="auto"><h3 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">构建 Tensor Core GEMM 内核子集</font></font></h3><a id="user-content-building-a-subset-tensor-core-gemm-kernels" class="anchor" aria-label="永久链接：构建 Tensor Core GEMM 内核子集" href="#building-a-subset-tensor-core-gemm-kernels"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">要编译针对 NVIDIA Ampere 和 Turing 架构的具有 FP32 累积和 FP16 输入的 Tensor Core GEMM 内核子集，请使用以下 cmake 命令行：</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ cmake .. -DCUTLASS_NVCC_ARCHS=<span class="pl-s"><span class="pl-pds">'</span>75;80<span class="pl-pds">'</span></span> -DCUTLASS_LIBRARY_KERNELS=cutlass_tensorop_s<span class="pl-k">*</span>gemm_f16_<span class="pl-k">*</span>_nt_align8
+...
+$ make cutlass_profiler -j16</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cmake .. -DCUTLASS_NVCC_ARCHS='75;80' -DCUTLASS_LIBRARY_KERNELS=cutlass_tensorop_s*gemm_f16_*_nt_align8
+...
+$ make cutlass_profiler -j16" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">用于分析 Tensor Core GEMM 内核子集的示例命令行如下：</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>./tools/profiler/cutlass_profiler --kernels=cutlass_tensorop_s<span class="pl-k">*</span>gemm_f16_<span class="pl-k">*</span>_nt_align8 --m=3456 --n=4096 --k=4096
 
 ...
 =============================
@@ -380,21 +481,67 @@ reference_device: Passed
 
 
 =============================
+...</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="./tools/profiler/cutlass_profiler --kernels=cutlass_tensorop_s*gemm_f16_*_nt_align8 --m=3456 --n=4096 --k=4096
+
 ...
-```
+=============================
+  Problem ID: 1
 
-### Building one CUDA Core GEMM kernel
+        Provider: CUTLASS
+   OperationKind: gemm
+       Operation: cutlass_tensorop_s1688gemm_f16_256x128_32x2_nt_align8
 
-To compile one SGEMM kernel targeting NVIDIA Ampere and Turing architecture, use the below cmake command line:
-```bash
-$ cmake .. -DCUTLASS_NVCC_ARCHS='75;80' -DCUTLASS_LIBRARY_KERNELS=cutlass_simt_sgemm_128x128_8x2_nn_align1
+          Status: Success
+    Verification: ON
+     Disposition: Passed
+
+reference_device: Passed
+          cuBLAS: Passed
+
+       Arguments: --gemm_kind=universal --m=3456 --n=4096 --k=4096 --A=f16:column --B=f16:row --C=f32:column --alpha=1  \
+                  --beta=0 --split_k_slices=1 --batch_count=1 --op_class=tensorop --accum=f32 --cta_m=256 --cta_n=128  \
+                  --cta_k=32 --stages=2 --warps_m=4 --warps_n=2 --warps_k=1 --inst_m=16 --inst_n=8 --inst_k=8 --min_cc=75  \
+                  --max_cc=1024
+
+           Bytes: 118489088  bytes
+           FLOPs: 115992428544  flops
+
+         Runtime: 1.55948  ms
+          Memory: 70.7616 GiB/s
+
+            Math: 74378.8 GFLOP/s
+
+
+
+=============================
+..." tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<div class="markdown-heading" dir="auto"><h3 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">构建一个 CUDA Core GEMM 内核</font></font></h3><a id="user-content-building-one-cuda-core-gemm-kernel" class="anchor" aria-label="永久链接：构建一个 CUDA Core GEMM 内核" href="#building-one-cuda-core-gemm-kernel"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">要编译一个针对 NVIDIA Ampere 和 Turing 架构的 SGEMM 内核，请使用以下 cmake 命令行：</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ cmake .. -DCUTLASS_NVCC_ARCHS=<span class="pl-s"><span class="pl-pds">'</span>75;80<span class="pl-pds">'</span></span> -DCUTLASS_LIBRARY_KERNELS=cutlass_simt_sgemm_128x128_8x2_nn_align1
 ...
-$ make cutlass_profiler -j16
-```
-
-Example command line for profiling single SGEMM CUDA kernel is as follows:
-```bash
-$ ./tools/profiler/cutlass_profiler --kernels=sgemm --m=3456 --n=4096 --k=4096
+$ make cutlass_profiler -j16</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cmake .. -DCUTLASS_NVCC_ARCHS='75;80' -DCUTLASS_LIBRARY_KERNELS=cutlass_simt_sgemm_128x128_8x2_nn_align1
+...
+$ make cutlass_profiler -j16" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">用于分析单个 SGEMM CUDA 内核的示例命令行如下：</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ ./tools/profiler/cutlass_profiler --kernels=sgemm --m=3456 --n=4096 --k=4096
 
 =============================
   Problem ID: 1
@@ -421,23 +568,61 @@ $ ./tools/profiler/cutlass_profiler --kernels=sgemm --m=3456 --n=4096 --k=4096
 
             Math: 17218.4 GFLOP/s
 
+=============================</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ ./tools/profiler/cutlass_profiler --kernels=sgemm --m=3456 --n=4096 --k=4096
+
 =============================
-```
+  Problem ID: 1
 
-### Building a subset of Tensor Core Convolution kernels
+        Provider: CUTLASS
+   OperationKind: gemm
+       Operation: cutlass_simt_sgemm_128x128_8x2_nn_align1
 
-To compile a subset of Tensor core convolution kernels implementing forward propagation (fprop) with FP32 accumulation 
-and FP16 input targeting NVIDIA Ampere and Turing architecture, use the below cmake command line:
-```bash
-$ cmake .. -DCUTLASS_NVCC_ARCHS='75;80' -DCUTLASS_LIBRARY_KERNELS=cutlass_tensorop_s*fprop_optimized_f16
+          Status: Success
+    Verification: ON
+     Disposition: Passed
+
+          cuBLAS: Passed
+
+       Arguments: --m=3456 --n=4096 --k=4096 --A=f32:column --B=f32:column --C=f32:column --alpha=1 --beta=0 --split_k_slices=1  \
+                  --batch_count=1 --op_class=simt --accum=f32 --cta_m=128 --cta_n=128 --cta_k=8 --stages=2 --warps_m=4  \
+                  --warps_n=2 --warps_k=1 --inst_m=1 --inst_n=1 --inst_k=1 --min_cc=50 --max_cc=1024
+
+           Bytes: 180355072  bytes
+           FLOPs: 115992428544  flops
+
+         Runtime: 6.73655  ms
+          Memory: 24.934 GiB/s
+
+            Math: 17218.4 GFLOP/s
+
+=============================" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<div class="markdown-heading" dir="auto"><h3 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">构建 Tensor Core Convolution 内核的子集</font></font></h3><a id="user-content-building-a-subset-of-tensor-core-convolution-kernels" class="anchor" aria-label="永久链接：构建 Tensor Core 卷积内核的子集" href="#building-a-subset-of-tensor-core-convolution-kernels"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">要编译针对 NVIDIA Ampere 和 Turing 架构的具有 FP32 累积和 FP16 输入的前向传播 (fprop) 的 Tensor 核心卷积核子集，请使用以下 cmake 命令行：</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ cmake .. -DCUTLASS_NVCC_ARCHS=<span class="pl-s"><span class="pl-pds">'</span>75;80<span class="pl-pds">'</span></span> -DCUTLASS_LIBRARY_KERNELS=cutlass_tensorop_s<span class="pl-k">*</span>fprop_optimized_f16
 ...
-$ make cutlass_profiler -j16
-```
-
-Example command line for profiling a subset of Tensor Core convolution kernels is as follows:
-
-```bash
-$ ./tools/profiler/cutlass_profiler --kernels=cutlass_tensorop_s*fprop_optimized_f16 --n=8 --h=224 --w=224 --c=128 --k=128 --r=3 --s=3
+$ make cutlass_profiler -j16</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cmake .. -DCUTLASS_NVCC_ARCHS='75;80' -DCUTLASS_LIBRARY_KERNELS=cutlass_tensorop_s*fprop_optimized_f16
+...
+$ make cutlass_profiler -j16" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">用于分析 Tensor Core 卷积核子集的示例命令行如下：</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ ./tools/profiler/cutlass_profiler --kernels=cutlass_tensorop_s<span class="pl-k">*</span>fprop_optimized_f16 --n=8 --h=224 --w=224 --c=128 --k=128 --r=3 --s=3
 
 ...
 =============================
@@ -468,24 +653,65 @@ reference_device: Passed
             Math: 166526 GFLOP/s
 
 =============================
+...</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ ./tools/profiler/cutlass_profiler --kernels=cutlass_tensorop_s*fprop_optimized_f16 --n=8 --h=224 --w=224 --c=128 --k=128 --r=3 --s=3
+
 ...
-```
+=============================
+  Problem ID: 1
 
+        Provider: CUTLASS
+   OperationKind: conv2d
+       Operation: cutlass_tensorop_s16816fprop_optimized_f16_128x128_32x5_nhwc
 
-### Building one Convolution CUDA kernel
+          Status: Success
+    Verification: ON
+     Disposition: Passed
 
-To compile and run one CUDA Core convolution kernel implementing forward propagation (fprop) with F32 accumulation 
-and FP32 input targeting NVIDIA Ampere and Turing architecture, use the below cmake command line:
-```bash
-$ cmake .. -DCUTLASS_NVCC_ARCHS='75;80' -DCUTLASS_LIBRARY_KERNELS=cutlass_simt_sfprop_optimized_128x128_8x2_nhwc
+reference_device: Passed
+
+       Arguments: --conv_kind=fprop --n=8 --h=224 --w=224 --c=128 --k=128 --r=3 --s=3 --p=224 --q=224 --pad_h=1 --pad_w=1  \
+                  --stride_h=1 --stride_w=1 --dilation_h=1 --dilation_w=1 --Activation=f16:nhwc --Filter=f16:nhwc --Output=f32:nhwc  \
+                  --conv_mode=cross --iterator_algorithm=optimized --alpha=1 --beta=0 --split_k_mode=serial --split_k_slices=1  \
+                  --eq_gemm_provider=none --op_class=tensorop --accum=f32 --cta_m=128 --cta_n=128 --cta_k=32 --stages=5  \
+                  --warps_m=2 --warps_n=2 --warps_k=1 --inst_m=16 --inst_n=8 --inst_k=16 --min_cc=80 --max_cc=1024
+
+           Bytes: 1130659840  bytes
+           FLOPs: 118482796544  flops
+
+         Runtime: 0.711496  ms
+          Memory: 1479.99 GiB/s
+
+            Math: 166526 GFLOP/s
+
+=============================
+..." tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<div class="markdown-heading" dir="auto"><h3 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">构建一个卷积 CUDA 内核</font></font></h3><a id="user-content-building-one-convolution-cuda-kernel" class="anchor" aria-label="永久链接：构建一个卷积 CUDA 内核" href="#building-one-convolution-cuda-kernel"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">要编译并运行一个针对 NVIDIA Ampere 和 Turing 架构的具有 F32 累积和 FP32 输入的前向传播 (fprop) 的 CUDA Core 卷积内核，请使用以下 cmake 命令行：</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ cmake .. -DCUTLASS_NVCC_ARCHS=<span class="pl-s"><span class="pl-pds">'</span>75;80<span class="pl-pds">'</span></span> -DCUTLASS_LIBRARY_KERNELS=cutlass_simt_sfprop_optimized_128x128_8x2_nhwc
 ...
-$ make cutlass_profiler -j16
-```
-
-Example command line for profiling one CUDA Core convolution kernel:
-
-```bash
-$ ./tools/profiler/cutlass_profiler --kernels=cutlass_simt_sfprop_optimized_128x128_8x2_nhwc --n=8 --h=224 --w=224 --c=128 --k=128 --r=3 --s=3
+$ make cutlass_profiler -j16</pre><div class="zeroclipboard-container">
+    <clipboard-copy aria-label="Copy" class="ClipboardButton btn btn-invisible js-clipboard-copy m-2 p-0 tooltipped-no-delay d-flex flex-justify-center flex-items-center" data-copy-feedback="Copied!" data-tooltip-direction="w" value="$ cmake .. -DCUTLASS_NVCC_ARCHS='75;80' -DCUTLASS_LIBRARY_KERNELS=cutlass_simt_sfprop_optimized_128x128_8x2_nhwc
+...
+$ make cutlass_profiler -j16" tabindex="0" role="button">
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-copy js-clipboard-copy-icon">
+    <path d="M0 6.75C0 5.784.784 5 1.75 5h1.5a.75.75 0 0 1 0 1.5h-1.5a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-1.5a.75.75 0 0 1 1.5 0v1.5A1.75 1.75 0 0 1 9.25 16h-7.5A1.75 1.75 0 0 1 0 14.25Z"></path><path d="M5 1.75C5 .784 5.784 0 6.75 0h7.5C15.216 0 16 .784 16 1.75v7.5A1.75 1.75 0 0 1 14.25 11h-7.5A1.75 1.75 0 0 1 5 9.25Zm1.75-.25a.25.25 0 0 0-.25.25v7.5c0 .138.112.25.25.25h7.5a.25.25 0 0 0 .25-.25v-7.5a.25.25 0 0 0-.25-.25Z"></path>
+</svg>
+      <svg aria-hidden="true" height="16" viewBox="0 0 16 16" version="1.1" width="16" data-view-component="true" class="octicon octicon-check js-clipboard-check-icon color-fg-success d-none">
+    <path d="M13.78 4.22a.75.75 0 0 1 0 1.06l-7.25 7.25a.75.75 0 0 1-1.06 0L2.22 9.28a.751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018L6 10.94l6.72-6.72a.75.75 0 0 1 1.06 0Z"></path>
+</svg>
+    </clipboard-copy>
+  </div></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">用于分析一个 CUDA Core 卷积内核的示例命令行：</font></font></p>
+<div class="highlight highlight-source-shell notranslate position-relative overflow-auto" dir="auto"><pre>$ ./tools/profiler/cutlass_profiler --kernels=cutlass_simt_sfprop_optimized_128x128_8x2_nhwc --n=8 --h=224 --w=224 --c=128 --k=128 --r=3 --s=3
 
 
 =============================
@@ -517,32 +743,27 @@ reference_device: Passed
 
 
 =============================
-
-```
-
-## More Details on Compiling CUTLASS Kernels and CUTLASS Profiler
-- Please follow the links for more CMake examples on selectively compiling CUTLASS kernels:
-  - [GEMM CMake Examples](./media/docs/quickstart.md#gemm-cmake-examples) 
-  - [Implicit GEMM convolution CMake Examples](./media/docs/quickstart.md#convolution-cmake-examples)
-- [Further details about the CUTLASS Profiler are described here.](./media/docs/profiler.md)
-
-
-# About
-
-CUTLASS is released by NVIDIA Corporation as Open Source software under the 
-[3-clause "New" BSD license](LICENSE.txt).
-
-# Contributors
-
-The official list of CUTLASS developers and contributors is available here: [CONTRIBUTORS](CONTRIBUTORS.md).
-
-# Copyright
-
-Copyright (c) 2017 - 2024 NVIDIA CORPORATION & AFFILIATES. All rights reserved.
-SPDX-License-Identifier: BSD-3-Clause
-
-```
-  Redistribution and use in source and binary forms, with or without
+</pre><div class="zeroclipboard-container">
+  
+  </div></div>
+<div class="markdown-heading" dir="auto"><h2 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">有关编译 CUTLASS 内核和 CUTLASS Profiler 的更多详细信息</font></font></h2><a id="user-content-more-details-on-compiling-cutlass-kernels-and-cutlass-profiler" class="anchor" aria-label="永久链接：有关编译 CUTLASS 内核和 CUTLASS Profiler 的更多详细信息" href="#more-details-on-compiling-cutlass-kernels-and-cutlass-profiler"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<ul dir="auto">
+<li><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">请点击以下链接，获取有关选择性编译 CUTLASS 内核的更多 CMake 示例：
+</font></font><ul dir="auto">
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/quickstart.md#gemm-cmake-examples"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">GEMM CMake 示例</font></font></a></li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/quickstart.md#convolution-cmake-examples"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">隐式 GEMM 卷积 CMake 示例</font></font></a></li>
+</ul>
+</li>
+<li><a href="/NVIDIA/cutlass/blob/main/media/docs/profiler.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">有关 CUTLASS Profiler 的更多详细信息请参见此处。</font></font></a></li>
+</ul>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">关于</font></font></h1><a id="user-content-about" class="anchor" aria-label="永久链接：关于" href="#about"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"></font><a href="/NVIDIA/cutlass/blob/main/LICENSE.txt"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 是 NVIDIA 公司根据3 条“新”BSD 许可证</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">作为开源软件发布的
+</font><font style="vertical-align: inherit;">。</font></font></p>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">贡献者</font></font></h1><a id="user-content-contributors" class="anchor" aria-label="永久链接：贡献者" href="#contributors"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">CUTLASS 开发者和贡献者的官方列表可在此处找到：</font></font><a href="/NVIDIA/cutlass/blob/main/CONTRIBUTORS.md"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">贡献者</font></font></a><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">。</font></font></p>
+<div class="markdown-heading" dir="auto"><h1 tabindex="-1" class="heading-element" dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">版权</font></font></h1><a id="user-content-copyright" class="anchor" aria-label="永久链接：版权所有" href="#copyright"><svg class="octicon octicon-link" viewBox="0 0 16 16" version="1.1" width="16" height="16" aria-hidden="true"><path d="m7.775 3.275 1.25-1.25a3.5 3.5 0 1 1 4.95 4.95l-2.5 2.5a3.5 3.5 0 0 1-4.95 0 .751.751 0 0 1 .018-1.042.751.751 0 0 1 1.042-.018 1.998 1.998 0 0 0 2.83 0l2.5-2.5a2.002 2.002 0 0 0-2.83-2.83l-1.25 1.25a.751.751 0 0 1-1.042-.018.751.751 0 0 1-.018-1.042Zm-4.69 9.64a1.998 1.998 0 0 0 2.83 0l1.25-1.25a.751.751 0 0 1 1.042.018.751.751 0 0 1 .018 1.042l-1.25 1.25a3.5 3.5 0 1 1-4.95-4.95l2.5-2.5a3.5 3.5 0 0 1 4.95 0 .751.751 0 0 1-.018 1.042.751.751 0 0 1-1.042.018 1.998 1.998 0 0 0-2.83 0l-2.5 2.5a1.998 1.998 0 0 0 0 2.83Z"></path></svg></a></div>
+<p dir="auto"><font style="vertical-align: inherit;"><font style="vertical-align: inherit;">版权所有 (c) 2017 - 2024 NVIDIA 公司及附属公司。版权所有。 SPDX 许可证标识符：BSD-3 条款</font></font></p>
+<div class="snippet-clipboard-content notranslate position-relative overflow-auto"><pre class="notranslate"><code>  Redistribution and use in source and binary forms, with or without
   modification, are permitted provided that the following conditions are met:
 
   1. Redistributions of source code must retain the above copyright notice, this
@@ -566,4 +787,7 @@ SPDX-License-Identifier: BSD-3-Clause
   CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
   OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
-```
+</code></pre><div class="zeroclipboard-container">
+  
+  </div></div>
+</article></div>
